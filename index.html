@@ -146,7 +146,7 @@
             border: 4px solid white;
             border-radius: 50%;
             cursor: pointer;
-            margin-top: -6px; /* (Track height / 2) - (Thumb height / 2) */
+            margin-top: -6px;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
         #question-slider::-moz-range-track {
@@ -172,12 +172,12 @@
         <i id="theme-icon-dark" class="fa-solid fa-sun text-amber-400 hidden dark:block"></i>
     </button>
 
-    <!-- Developer Bubble - Bottom Right & Round -->
+    <!-- Developer Bubble -->
     <button id="dev-bubble" onclick="openDevModal()" class="fixed bottom-4 right-4 z-50 bg-white dark:bg-darkCard shadow-2xl border border-slate-200 dark:border-darkBorder w-14 h-14 rounded-full flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 group print-hidden" title="About Developer">
         <span class="text-3xl animate-wave-hand wave-hand-icon">👋</span>
     </button>
 
-    <!-- Next Action Bubble - Now moved to Bottom Left -->
+    <!-- Next Action Bubble -->
     <button id="next-action-bubble" onclick="toggleActionModal(true)" class="fixed bottom-4 left-4 z-50 bg-white dark:bg-darkCard shadow-2xl border border-slate-200 dark:border-darkBorder px-4 py-2 rounded-full flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 group hidden print-hidden">
         <div class="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
             <i class="fa-solid fa-chevron-right text-amber-700 dark:text-amber-500 text-xs"></i>
@@ -261,14 +261,33 @@
         <div id="result-screen" class="max-w-md mx-auto py-8 px-6 text-center hidden fade-in">
             <div class="bg-white dark:bg-darkCard rounded-[2.5rem] shadow-2xl p-8 border border-slate-100 dark:border-darkBorder">
                 <div class="relative inline-block mb-4">
-                    <i id="trophy-icon" class="fa-solid fa-trophy text-5xl text-amber-500"></i>
-                    <div id="score-badge" class="absolute top-0 right-[-8px] bg-slate-900 dark:bg-amber-600 text-white w-9 h-9 rounded-full flex items-center justify-center font-bold">0</div>
+                    <i id="trophy-icon" class="fa-solid fa-trophy text-5xl"></i>
                 </div>
-                <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">Final Evaluation</h2>
-                <p id="result-message" class="text-slate-500 dark:text-slate-400 mb-6 leading-relaxed"></p>
-                <button onclick="showCertificate()" class="w-full bg-amber-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-amber-700 transition-all shadow-lg shadow-amber-200/50">
-                    <i class="fa-solid fa-award"></i> View Diploma
-                </button>
+                <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">Academic Evaluation</h2>
+                
+                <!-- Score Breakdown -->
+                <div class="flex flex-col items-center gap-1 mb-6">
+                    <div class="flex items-baseline gap-1">
+                        <span id="final-score-val" class="text-4xl font-black text-slate-800 dark:text-white">0</span>
+                        <span id="final-total-val" class="text-slate-400 font-bold">/10</span>
+                    </div>
+                    <div id="final-percentage" class="text-amber-600 font-black text-xl">0%</div>
+                    <div id="final-grade-label" class="mt-2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest"></div>
+                </div>
+
+                <p id="result-message" class="text-slate-500 dark:text-slate-400 mb-6 leading-relaxed text-sm"></p>
+                
+                <div id="result-actions" class="space-y-3">
+                    <button id="cert-btn" onclick="showCertificate()" class="w-full bg-amber-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-amber-700 transition-all shadow-lg shadow-amber-200/50">
+                        <i class="fa-solid fa-award"></i> View Diploma
+                    </button>
+                    <button id="retry-btn" onclick="restartExam()" class="w-full bg-slate-900 dark:bg-slate-700 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg hidden">
+                        <i class="fa-solid fa-rotate-left"></i> Retry Exam
+                    </button>
+                    <button onclick="goHome()" class="w-full text-slate-400 font-bold py-2 text-xs hover:text-slate-600 transition-all">
+                        Back to Menu
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -629,7 +648,7 @@
                     </div>
                     <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Meet the Developer</h3>
                     <p class="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
-                        Kevin Malomba is a visionary Biochemist and Web Developer based in Kenya. He is deeply passionate about decoding the complexities of life and logic—bridging the gap between the biological sequences of DNA and the digital elegance of software code.
+                        Kevin Malomba is a visionary Biochemist and Web Developer based in Kenya. He is deeply passionate about decoding the complexities of life and logic; Bridging the gap between the biological sequences of DNA and the digital elegance of software code.
                     </p>
                     <div class="grid grid-cols-2 gap-3">
                         <button onclick="toggleModal(false)" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl hover:bg-slate-200 transition-all text-sm">
@@ -778,18 +797,59 @@
 
         function showResult() {
             showScreen('result');
-            document.getElementById('score-badge').textContent = state.score;
-            document.getElementById('trophy-icon').className = `fa-solid fa-trophy text-5xl ${state.score === state.questions.length ? 'text-amber-500' : 'text-slate-300 dark:text-slate-600'}`;
-            document.getElementById('result-message').textContent = state.score === state.questions.length ? "Academic Excellence Achieved!" : "Assessment concluded successfully.";
+            const total = state.questions.length;
+            const percentage = Math.round((state.score / total) * 100);
+            
+            document.getElementById('final-score-val').textContent = state.score;
+            document.getElementById('final-total-val').textContent = `/${total}`;
+            document.getElementById('final-percentage').textContent = `${percentage}%`;
+            
+            const trophy = document.getElementById('trophy-icon');
+            const message = document.getElementById('result-message');
+            const gradeLabel = document.getElementById('final-grade-label');
+            const certBtn = document.getElementById('cert-btn');
+            const retryBtn = document.getElementById('retry-btn');
+            
+            if (percentage >= 80) {
+                trophy.className = "fa-solid fa-trophy text-5xl text-amber-500";
+                message.textContent = "Outstanding Achievement! You have demonstrated exceptional mastery and are eligible for graduation with honors.";
+                gradeLabel.textContent = "First Class Honors";
+                gradeLabel.className = "mt-2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400";
+                certBtn.classList.remove('hidden');
+                retryBtn.classList.add('hidden');
+            } else if (percentage >= 40) {
+                trophy.className = "fa-solid fa-trophy text-5xl text-slate-400";
+                message.textContent = "Evaluation Successful. You have achieved the required proficiency level to receive your professional diploma.";
+                gradeLabel.textContent = "Pass";
+                gradeLabel.className = "mt-2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400";
+                certBtn.classList.remove('hidden');
+                retryBtn.classList.add('hidden');
+            } else {
+                trophy.className = "fa-solid fa-circle-xmark text-5xl text-red-500";
+                message.textContent = "Academic criteria not met. Proficiency below the 40% threshold prevents diploma generation. Please review and retry the evaluation.";
+                gradeLabel.textContent = "Fail - Retry Required";
+                gradeLabel.className = "mt-2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400";
+                certBtn.classList.add('hidden');
+                retryBtn.classList.remove('hidden');
+            }
         }
 
         function showCertificate() {
+            const percentage = Math.round((state.score / state.questions.length) * 100);
+            if (percentage < 40) return;
+
             showScreen('certificate');
             document.getElementById('cert-name').textContent = state.userName;
             document.getElementById('cert-date').textContent = new Date().toLocaleDateString();
-            const grade = document.getElementById('cert-grade'); const isPerfect = state.score === state.questions.length;
-            grade.textContent = isPerfect ? 'FIRST CLASS HONORS' : 'PASS';
-            grade.className = `text-3xl md:text-5xl font-black italic ${isPerfect ? 'text-amber-600' : 'text-slate-600'}`;
+            
+            const grade = document.getElementById('cert-grade');
+            if (percentage >= 80) {
+                grade.textContent = 'FIRST CLASS HONORS';
+                grade.className = 'text-3xl md:text-5xl font-black italic text-amber-600';
+            } else {
+                grade.textContent = 'PASS';
+                grade.className = 'text-3xl md:text-5xl font-black italic text-slate-600';
+            }
         }
 
         function downloadCertImage() {
