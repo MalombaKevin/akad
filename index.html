@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malomba Academy Quiz</title>
+    
+    <!-- Social Media Meta Tags -->
+    <meta property="og:title" content="Capital City Quiz by Malomba Academy">
+    <meta property="og:description" content="Test your knowledge of global capitals and earn your diploma.">
+    <meta property="og:image" content="https://lizardpoint.com/geography/images/maps/world-caps.gif">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Capital City Quiz by Malomba Academy">
+    <meta name="twitter:image" content="https://lizardpoint.com/geography/images/maps/world-caps.gif">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b',
+                        darkBorder: '#334155'
+                    },
+                    animation: {
+                        'success-pulse': 'successPulse 0.5s ease-out forwards',
+                        'shake-error': 'shakeError 0.4s ease-in-out',
+                        'glow-orange': 'glowOrange 1.5s infinite',
+                        'wave-hand': 'waveHand 2s infinite'
+                    },
+                    keyframes: {
+                        successPulse: {
+                            '0%': { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(34, 197, 94, 0.4)' },
+                            '70%': { transform: 'scale(1.05)', boxShadow: '0 0 0 15px rgba(34, 197, 94, 0)' },
+                            '100%': { transform: 'scale(1.05)', borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)' }
+                        },
+                        shakeError: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '25%': { transform: 'translateX(-8px)' },
+                            '50%': { transform: 'translateX(8px)' },
+                            '75%': { transform: 'translateX(-8px)' }
+                        },
+                        glowOrange: {
+                            '0%, 100%': { boxShadow: '0 0 5px #f59e0b, inset 0 0 5px #f59e0b', borderColor: '#f59e0b' },
+                            '50%': { boxShadow: '0 0 20px #f59e0b, inset 0 0 10px #f59e0b', borderColor: '#fbbf24' }
+                        },
+                        waveHand: {
+                            '0%, 100%': { transform: 'rotate(0deg)' },
+                            '20%, 60%': { transform: 'rotate(-25deg)' },
+                            '40%, 80%': { transform: 'rotate(10deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&family=JetBrains+Mono&display=swap');
+
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; overflow-x: hidden; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #cert-capture-area, #cert-capture-area * { visibility: visible; }
+            #cert-capture-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border: none !important; }
+            .print-hidden { display: none !important; }
+            @page { size: landscape; margin: 0; }
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shakeBlink {
+            0%, 100% { transform: translateX(0); border-color: #334155; }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); border-color: #ef4444; background-color: rgba(239, 68, 68, 0.1); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); border-color: #ef4444; }
+        }
+        .input-error {
+            animation: shakeBlink 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        .correct-choice { animation: successPulse 0.5s ease-out forwards !important; pointer-events: none; }
+        .wrong-choice { animation: shakeError 0.4s ease-in-out forwards !important; border-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.05) !important; pointer-events: none; }
+        .revealed-correct { animation: glowOrange 1s ease-in-out infinite alternate !important; border-color: #f59e0b !important; pointer-events: none; background-color: rgba(245, 158, 11, 0.05) !important; }
+
+        #cert-capture-area { background-color: white; }
+
+        .seal-container {
+            width: 140px;
+            height: 140px;
+            position: relative;
+        }
+        
+        .seal-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 9999px;
+            border: 4px solid #d97706;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d97706; border-radius: 10px; }
+
+        .status-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.25rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .show-icon { opacity: 1; }
+
+        .wave-hand-icon {
+            display: inline-block;
+            transform-origin: bottom right;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-900 dark:text-slate-100 min-h-screen flex flex-col items-center">
+
+    <!-- Theme Toggle -->
+    <button onclick="toggleTheme()" class="fixed top-4 right-4 z-50 bg-white dark:bg-darkCard shadow-xl border border-slate-200 dark:border-darkBorder p-2.5 rounded-full hover:scale-110 transition-all active:scale-95 print-hidden">
+        <i id="theme-icon" class="fa-solid fa-moon text-slate-600 dark:hidden"></i>
+        <i id="theme-icon-dark" class="fa-solid fa-sun text-amber-400 hidden dark:block"></i>
+    </button>
+
+    <!-- Developer Bubble - Bottom Right & Round -->
+    <button id="dev-bubble" onclick="openDevModal()" class="fixed bottom-4 right-4 z-50 bg-white dark:bg-darkCard shadow-2xl border border-slate-200 dark:border-darkBorder w-14 h-14 rounded-full flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 group print-hidden" title="About Developer">
+        <span class="text-3xl animate-wave-hand wave-hand-icon">👋</span>
+    </button>
+
+    <!-- Next Action Bubble - Now moved to Bottom Left -->
+    <button id="next-action-bubble" onclick="toggleActionModal(true)" class="fixed bottom-4 left-4 z-50 bg-white dark:bg-darkCard shadow-2xl border border-slate-200 dark:border-darkBorder px-4 py-2 rounded-full flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 group hidden print-hidden">
+        <div class="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+            <i class="fa-solid fa-chevron-right text-amber-700 dark:text-amber-500 text-xs"></i>
+        </div>
+        <span class="font-bold text-slate-700 dark:text-slate-300 text-xs">Next Action</span>
+    </button>
+
+    <!-- Unified Modal Overlay -->
+    <div id="modal-overlay" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden print-hidden">
+        <div id="modal-container" class="bg-white dark:bg-darkCard rounded-[2rem] w-full max-w-xs p-6 shadow-2xl scale-95 opacity-0 transition-all duration-200">
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <div id="app-container" class="w-full max-w-4xl pt-4 md:pt-8 pb-4">
+        
+        <!-- Menu Screen -->
+        <div id="menu-screen" class="w-full max-w-lg mx-auto px-4 fade-in">
+            <div class="text-center mb-4">
+                <div class="bg-amber-600 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-lg">
+                    <i class="fa-solid fa-earth-africa text-white text-2xl"></i>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">Malomba Academy</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-base font-medium">World Capital Graduation Exam</p>
+            </div>
+
+            <div class="bg-white dark:bg-darkCard rounded-[2rem] shadow-xl p-5 md:p-7 border border-slate-100 dark:border-darkBorder">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest">Name</label>
+                        <input type="text" id="student-name" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-4 py-3 focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white text-lg font-bold" placeholder="Enter your name...">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest">Academic Region</label>
+                        <div id="region-selector" class="grid grid-cols-3 gap-2"></div>
+                    </div>
+
+                    <div class="pt-1">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest" id="question-count-label">Questions (10 Qs)</label>
+                        </div>
+                        <input type="range" id="question-slider" min="5" max="100" step="1" value="10" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                        <div class="flex justify-between text-[11px] font-black text-slate-400 dark:text-slate-500 mt-2 px-1 uppercase tracking-tighter">
+                            <span>5 Min</span>
+                            <span id="max-question-text">100 Max</span>
+                        </div>
+                    </div>
+
+                    <button onclick="startQuiz()" class="w-full bg-slate-900 dark:bg-amber-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-800 dark:hover:bg-amber-700 transition-all active:scale-95 shadow-lg text-lg mt-2">
+                        Enroll Now <i class="fa-solid fa-chevron-right ml-1 text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="max-w-2xl mx-auto px-6 py-4 hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white dark:bg-darkCard p-2 rounded-xl shadow-sm border border-slate-200 dark:border-darkBorder">
+                        <i class="fa-solid fa-map-location-dot text-amber-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p id="quiz-progress" class="text-xs font-bold text-slate-400 uppercase tracking-widest"></p>
+                        <h2 id="quiz-question" class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white"></h2>
+                    </div>
+                </div>
+                <div id="timer-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 transition-colors border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/20 text-amber-600 shrink-0">
+                    <i class="fa-solid fa-clock"></i>
+                    <span id="timer-text" class="font-mono font-black text-lg">12s</span>
+                </div>
+            </div>
+            <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4"></div>
+            <div class="mt-8 w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div id="timer-bar" class="bg-amber-500 h-full w-full transition-all duration-1000 ease-linear"></div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="max-w-md mx-auto py-8 px-6 text-center hidden fade-in">
+            <div class="bg-white dark:bg-darkCard rounded-[2.5rem] shadow-2xl p-8 border border-slate-100 dark:border-darkBorder">
+                <div class="relative inline-block mb-4">
+                    <i id="trophy-icon" class="fa-solid fa-trophy text-5xl text-amber-500"></i>
+                    <div id="score-badge" class="absolute top-0 right-[-8px] bg-slate-900 dark:bg-amber-600 text-white w-9 h-9 rounded-full flex items-center justify-center font-bold">0</div>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">Final Evaluation</h2>
+                <p id="result-message" class="text-slate-500 dark:text-slate-400 mb-6 leading-relaxed"></p>
+                <button onclick="showCertificate()" class="w-full bg-amber-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-amber-700 transition-all shadow-lg shadow-amber-200/50">
+                    <i class="fa-solid fa-award"></i> View Diploma
+                </button>
+            </div>
+        </div>
+
+        <!-- Certificate Screen -->
+        <div id="certificate-screen" class="hidden fade-in relative">
+            <div class="min-h-[80vh] flex flex-col items-center justify-center p-2">
+                <div id="cert-capture-area" class="max-w-4xl w-full bg-white border-[12px] border-double border-amber-600 p-6 md:p-10 shadow-2xl relative overflow-hidden print:border-[10px]">
+                    <div class="absolute top-[-40px] right-[-40px] opacity-10">
+                        <i class="fa-solid fa-award text-[250px] text-amber-800"></i>
+                    </div>
+                    <div class="text-center relative z-10">
+                        <h1 class="text-3xl md:text-5xl font-serif text-amber-900 mb-1 tracking-tight">MALOMBA ACADEMY</h1>
+                        <div class="w-24 h-1 bg-amber-600 mx-auto mb-6"></div>
+                        <p class="text-lg md:text-xl font-light italic text-gray-600 mb-6">This diploma is hereby conferred upon</p>
+                        <h2 id="cert-name" class="text-2xl md:text-4xl font-bold uppercase tracking-widest text-slate-800 mb-6 border-b-2 border-slate-200 inline-block px-4 text-center"></h2>
+                        <p class="text-base md:text-lg text-gray-700 mb-4 leading-relaxed">
+                            Having successfully demonstrated proficiency in the field of <br/>
+                            <span class="font-semibold text-slate-900">Global Geopolitical Geography & Capital Urbanization</span>
+                        </p>
+                        <div class="my-6">
+                            <p class="text-gray-500 uppercase tracking-tighter mb-1 text-[10px] font-bold">Grade Classification</p>
+                            <div id="cert-grade" class="text-3xl md:text-5xl font-black italic"></div>
+                        </div>
+                        <div class="flex flex-col md:flex-row justify-between items-center mt-12 px-6 border-t border-gray-100 pt-6 gap-6">
+                            <div class="text-center">
+                                <div class="font-serif text-xl italic mb-1 text-slate-900">Kevin Malomba</div>
+                                <div class="w-32 h-[1px] bg-gray-400 mx-auto"></div>
+                                <div class="text-[10px] uppercase text-gray-500 mt-1 tracking-widest font-bold">Chancellor</div>
+                            </div>
+                            <div class="seal-container scale-75 md:scale-100">
+                                <img src="https://media.istockphoto.com/id/155379309/photo/light-of-brainstorm.jpg?s=612x612&w=0&k=20&c=i158ZeUkIpzVk1aR65cRM2rjMmaAtmOYIK9DTa6-TJc=" 
+                                     alt="Official Academy Seal" 
+                                     class="seal-image"
+                                     crossorigin="anonymous">
+                            </div>
+                            <div class="text-center">
+                                <div id="cert-date" class="font-mono text-lg mb-1 text-slate-800"></div>
+                                <div class="w-32 h-[1px] bg-gray-400 mx-auto"></div>
+                                <div class="text-[10px] uppercase text-gray-500 mt-1 tracking-widest font-bold">Date of Issue</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex gap-3 print-hidden">
+                    <button onclick="toggleExportModal(true)" class="bg-amber-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-amber-700 transition-all shadow-lg text-sm">
+                        <i class="fa-solid fa-file-export"></i> Export
+                    </button>
+                    <button onclick="goHome()" class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-3 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all text-sm">
+                        Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CAPITAL_DATA = [
+            { country: "Afghanistan", capital: "Kabul", continent: "Asia" },
+            { country: "Albania", capital: "Tirana", continent: "Europe" },
+            { country: "Algeria", capital: "Algiers", continent: "Africa" },
+            { country: "Andorra", capital: "Andorra la Vella", continent: "Europe" },
+            { country: "Angola", capital: "Luanda", continent: "Africa" },
+            { country: "Antigua and Barbuda", capital: "St. John's", continent: "Americas" },
+            { country: "Argentina", capital: "Buenos Aires", continent: "Americas" },
+            { country: "Armenia", capital: "Yerevan", continent: "Asia" },
+            { country: "Australia", capital: "Canberra", continent: "Oceania" },
+            { country: "Austria", capital: "Vienna", continent: "Europe" },
+            { country: "Azerbaijan", capital: "Baku", continent: "Asia" },
+            { country: "Bahamas", capital: "Nassau", continent: "Americas" },
+            { country: "Bahrain", capital: "Manama", continent: "Asia" },
+            { country: "Bangladesh", capital: "Dhaka", continent: "Asia" },
+            { country: "Barbados", capital: "Bridgetown", continent: "Americas" },
+            { country: "Belarus", capital: "Minsk", continent: "Europe" },
+            { country: "Belgium", capital: "Brussels", continent: "Europe" },
+            { country: "Belize", capital: "Belmopan", continent: "Americas" },
+            { country: "Benin", capital: "Porto-Novo", continent: "Africa" },
+            { country: "Bhutan", capital: "Thimphu", continent: "Asia" },
+            { country: "Bolivia", capital: "Sucre", continent: "Americas" },
+            { country: "Bosnia and Herzegovina", capital: "Sarajevo", continent: "Europe" },
+            { country: "Botswana", capital: "Gaborone", continent: "Africa" },
+            { country: "Brazil", capital: "Brasilia", continent: "Americas" },
+            { country: "Brunei", capital: "Bandar Seri Begawan", continent: "Asia" },
+            { country: "Bulgaria", capital: "Sofia", continent: "Europe" },
+            { country: "Burkina Faso", capital: "Ouagadougou", continent: "Africa" },
+            { country: "Burundi", capital: "Gitega", continent: "Africa" },
+            { country: "Cabo Verde", capital: "Praia", continent: "Africa" },
+            { country: "Cambodia", capital: "Phnom Penh", continent: "Asia" },
+            { country: "Cameroon", capital: "Yaoundé", continent: "Africa" },
+            { country: "Canada", capital: "Ottawa", continent: "Americas" },
+            { country: "Central African Republic", capital: "Bangui", continent: "Africa" },
+            { country: "Chad", capital: "N'Djamena", continent: "Africa" },
+            { country: "Chile", capital: "Santiago", continent: "Americas" },
+            { country: "China", capital: "Beijing", continent: "Asia" },
+            { country: "Colombia", capital: "Bogotá", continent: "Americas" },
+            { country: "Comoros", capital: "Moroni", continent: "Africa" },
+            { country: "Congo", capital: "Brazzaville", continent: "Africa" },
+            { country: "Costa Rica", capital: "San José", continent: "Americas" },
+            { country: "Côte d'Ivoire", capital: "Yamoussoukro", continent: "Africa" },
+            { country: "Croatia", capital: "Zagreb", continent: "Europe" },
+            { country: "Cuba", capital: "Havana", continent: "Americas" },
+            { country: "Cyprus", capital: "Nicosia", continent: "Asia" },
+            { country: "Czech Republic", capital: "Prague", continent: "Europe" },
+            { country: "Democratic Republic of the Congo", capital: "Kinshasa", continent: "Africa" },
+            { country: "Denmark", capital: "Copenhagen", continent: "Europe" },
+            { country: "Djibouti", capital: "Djibouti", continent: "Africa" },
+            { country: "Dominica", capital: "Roseau", continent: "Americas" },
+            { country: "Dominican Republic", capital: "Santo Domingo", continent: "Americas" },
+            { country: "East Timor", capital: "Dili", continent: "Asia" },
+            { country: "Ecuador", capital: "Quito", continent: "Americas" },
+            { country: "Egypt", capital: "Cairo", continent: "Africa" },
+            { country: "El Salvador", capital: "San Salvador", continent: "Americas" },
+            { country: "Equatorial Guinea", capital: "Malabo", continent: "Africa" },
+            { country: "Eritrea", capital: "Asmara", continent: "Africa" },
+            { country: "Estonia", capital: "Tallinn", continent: "Europe" },
+            { country: "Eswatini", capital: "Mbabane", continent: "Africa" },
+            { country: "Ethiopia", capital: "Addis Ababa", continent: "Africa" },
+            { country: "Fiji", capital: "Suva", continent: "Oceania" },
+            { country: "Finland", capital: "Helsinki", continent: "Europe" },
+            { country: "France", capital: "Paris", continent: "Europe" },
+            { country: "Gabon", capital: "Libreville", continent: "Africa" },
+            { country: "Gambia", capital: "Banjul", continent: "Africa" },
+            { country: "Georgia", capital: "Tbilisi", continent: "Asia" },
+            { country: "Germany", capital: "Berlin", continent: "Europe" },
+            { country: "Ghana", capital: "Accra", continent: "Africa" },
+            { country: "Greece", capital: "Athens", continent: "Europe" },
+            { country: "Grenada", capital: "St. George's", continent: "Americas" },
+            { country: "Guatemala", capital: "Guatemala City", continent: "Americas" },
+            { country: "Guinea", capital: "Conakry", continent: "Africa" },
+            { country: "Guinea-Bissau", capital: "Bissau", continent: "Africa" },
+            { country: "Guyana", capital: "Georgetown", continent: "Americas" },
+            { country: "Haiti", capital: "Port-au-Prince", continent: "Americas" },
+            { country: "Honduras", capital: "Tegucigalpa", continent: "Americas" },
+            { country: "Hungary", capital: "Budapest", continent: "Europe" },
+            { country: "Iceland", capital: "Reykjavik", continent: "Europe" },
+            { country: "India", capital: "New Delhi", continent: "Asia" },
+            { country: "Indonesia", capital: "Jakarta", continent: "Asia" },
+            { country: "Iran", capital: "Tehran", continent: "Asia" },
+            { country: "Iraq", capital: "Baghdad", continent: "Asia" },
+            { country: "Ireland", capital: "Dublin", continent: "Europe" },
+            { country: "Israel", capital: "Jerusalem", continent: "Asia" },
+            { country: "Italy", capital: "Rome", continent: "Europe" },
+            { country: "Jamaica", capital: "Kingston", continent: "Americas" },
+            { country: "Japan", capital: "Tokyo", continent: "Asia" },
+            { country: "Jordan", capital: "Amman", continent: "Asia" },
+            { country: "Kazakhstan", capital: "Astana", continent: "Asia" },
+            { country: "Kenya", capital: "Nairobi", continent: "Africa" },
+            { country: "Kiribati", capital: "Tarawa", continent: "Oceania" },
+            { country: "Kuwait", capital: "Kuwait City", continent: "Asia" },
+            { country: "Kyrgyzstan", capital: "Bishkek", continent: "Asia" },
+            { country: "Laos", capital: "Vientiane", continent: "Asia" },
+            { country: "Latvia", capital: "Riga", continent: "Europe" },
+            { country: "Lebanon", capital: "Beirut", continent: "Asia" },
+            { country: "Lesotho", capital: "Maseru", continent: "Africa" },
+            { country: "Liberia", capital: "Monrovia", continent: "Africa" },
+            { country: "Libya", capital: "Tripoli", continent: "Africa" },
+            { country: "Liechtenstein", capital: "Vaduz", continent: "Europe" },
+            { country: "Lithuania", capital: "Vilnius", continent: "Europe" },
+            { country: "Luxembourg", capital: "Luxembourg", continent: "Europe" },
+            { country: "Madagascar", capital: "Antananarivo", continent: "Africa" },
+            { country: "Malawi", capital: "Lilongwe", continent: "Africa" },
+            { country: "Malaysia", capital: "Kuala Lumpur", continent: "Asia" },
+            { country: "Maldives", capital: "Malé", continent: "Asia" },
+            { country: "Mali", capital: "Bamako", continent: "Africa" },
+            { country: "Malta", capital: "Valletta", continent: "Europe" },
+            { country: "Marshall Islands", capital: "Majuro", continent: "Oceania" },
+            { country: "Mauritania", capital: "Nouakchott", continent: "Africa" },
+            { country: "Mauritius", capital: "Port Louis", continent: "Africa" },
+            { country: "Mexico", capital: "Mexico City", continent: "Americas" },
+            { country: "Micronesia", capital: "Palikir", continent: "Oceania" },
+            { country: "Moldova", capital: "Chișinău", continent: "Europe" },
+            { country: "Monaco", capital: "Monaco", continent: "Europe" },
+            { country: "Mongolia", capital: "Ulaanbaatar", continent: "Asia" },
+            { country: "Montenegro", capital: "Podgorica", continent: "Europe" },
+            { country: "Morocco", capital: "Rabat", continent: "Africa" },
+            { country: "Mozambique", capital: "Maputo", continent: "Africa" },
+            { country: "Myanmar", capital: "Naypyidaw", continent: "Asia" },
+            { country: "Namibia", capital: "Windhoek", continent: "Africa" },
+            { country: "Nauru", capital: "Yaren", continent: "Oceania" },
+            { country: "Nepal", capital: "Kathmandu", continent: "Asia" },
+            { country: "Netherlands", capital: "Amsterdam", continent: "Europe" },
+            { country: "New Zealand", capital: "Wellington", continent: "Oceania" },
+            { country: "Nicaragua", capital: "Managua", continent: "Americas" },
+            { country: "Niger", capital: "Niamey", continent: "Africa" },
+            { country: "Nigeria", capital: "Abuja", continent: "Africa" },
+            { country: "North Korea", capital: "Pyongyang", continent: "Asia" },
+            { country: "North Macedonia", capital: "Skopje", continent: "Europe" },
+            { country: "Norway", capital: "Oslo", continent: "Europe" },
+            { country: "Oman", capital: "Muscat", continent: "Asia" },
+            { country: "Pakistan", capital: "Islamabad", continent: "Asia" },
+            { country: "Palau", capital: "Ngerulmud", continent: "Oceania" },
+            { country: "Panama", capital: "Panama City", continent: "Americas" },
+            { country: "Papua New Guinea", capital: "Port Moresby", continent: "Oceania" },
+            { country: "Paraguay", capital: "Asunción", continent: "Americas" },
+            { country: "Peru", capital: "Lima", continent: "Americas" },
+            { country: "Philippines", capital: "Manila", continent: "Asia" },
+            { country: "Poland", capital: "Warsaw", continent: "Europe" },
+            { country: "Portugal", capital: "Lisbon", continent: "Europe" },
+            { country: "Qatar", capital: "Doha", continent: "Asia" },
+            { country: "Romania", capital: "Bucharest", continent: "Europe" },
+            { country: "Russia", capital: "Moscow", continent: "Europe" },
+            { country: "Rwanda", capital: "Kigali", continent: "Africa" },
+            { country: "Samoa", capital: "Apia", continent: "Oceania" },
+            { country: "San Marino", capital: "San Marino", continent: "Europe" },
+            { country: "Saudi Arabia", capital: "Riyadh", continent: "Asia" },
+            { country: "Senegal", capital: "Dakar", continent: "Africa" },
+            { country: "Serbia", capital: "Belgrade", continent: "Europe" },
+            { country: "Seychelles", capital: "Victoria", continent: "Africa" },
+            { country: "Sierra Leone", capital: "Freetown", continent: "Africa" },
+            { country: "Singapore", capital: "Singapore", continent: "Asia" },
+            { country: "Slovakia", capital: "Bratislava", continent: "Europe" },
+            { country: "Slovenia", capital: "Ljubljana", continent: "Europe" },
+            { country: "Solomon Islands", capital: "Honiara", continent: "Oceania" },
+            { country: "Somalia", capital: "Mogadishu", continent: "Africa" },
+            { country: "South Africa", capital: "Pretoria", continent: "Africa" },
+            { country: "South Korea", capital: "Seoul", continent: "Asia" },
+            { country: "South Sudan", capital: "Juba", continent: "Africa" },
+            { country: "Spain", capital: "Madrid", continent: "Europe" },
+            { country: "Sri Lanka", capital: "Colombo", continent: "Asia" },
+            { country: "Sudan", capital: "Khartoum", continent: "Africa" },
+            { country: "Suriname", capital: "Paramaribo", continent: "Americas" },
+            { country: "Sweden", capital: "Stockholm", continent: "Europe" },
+            { country: "Switzerland", capital: "Bern", continent: "Europe" },
+            { country: "Syria", capital: "Damascus", continent: "Asia" },
+            { country: "Taiwan", capital: "Taipei", continent: "Asia" },
+            { country: "Tajikistan", capital: "Dushanbe", continent: "Asia" },
+            { country: "Tanzania", capital: "Dodoma", continent: "Africa" },
+            { country: "Thailand", capital: "Bangkok", continent: "Asia" },
+            { country: "Togo", capital: "Lomé", continent: "Africa" },
+            { country: "Tonga", capital: "Nukuʻalofa", continent: "Oceania" },
+            { country: "Trinidad and Tobago", capital: "Port of Spain", continent: "Americas" },
+            { country: "Tunisia", capital: "Tunis", continent: "Africa" },
+            { country: "Turkey", capital: "Ankara", continent: "Asia" },
+            { country: "Turkmenistan", capital: "Ashgabat", continent: "Asia" },
+            { country: "Tuvalu", capital: "Funafuti", continent: "Oceania" },
+            { country: "Uganda", capital: "Kampala", continent: "Africa" },
+            { country: "Ukraine", capital: "Kyiv", continent: "Europe" },
+            { country: "United Arab Emirates", capital: "Abu Dhabi", continent: "Asia" },
+            { country: "United Kingdom", capital: "London", continent: "Europe" },
+            { country: "United States", capital: "Washington D.C.", continent: "Americas" },
+            { country: "Uruguay", capital: "Montevideo", continent: "Americas" },
+            { country: "Uzbekistan", capital: "Tashkent", continent: "Asia" },
+            { country: "Vanuatu", capital: "Port Vila", continent: "Oceania" },
+            { country: "Vatican City", capital: "Vatican City", continent: "Europe" },
+            { country: "Venezuela", capital: "Caracas", continent: "Americas" },
+            { country: "Vietnam", capital: "Hanoi", continent: "Asia" },
+            { country: "Yemen", capital: "Sana'a", continent: "Asia" },
+            { country: "Zambia", capital: "Lusaka", continent: "Africa" },
+            { country: "Zimbabwe", capital: "Harare", continent: "Africa" }
+        ];
+
+        const CONTINENTS = ["Random", "Africa", "Asia", "Europe", "Americas", "Oceania"];
+        let state = { 
+            currentScreen: 'menu', 
+            userName: '', 
+            selectedContinent: 'Random', 
+            questionCount: 10, 
+            questions: [], 
+            currentIndex: 0, 
+            score: 0, 
+            timeLeft: 12, 
+            timer: null,
+            isAnswering: false
+        };
+
+        const screens = { 
+            menu: document.getElementById('menu-screen'), 
+            quiz: document.getElementById('quiz-screen'), 
+            result: document.getElementById('result-screen'), 
+            certificate: document.getElementById('certificate-screen') 
+        };
+
+        function toggleTheme() { document.documentElement.classList.toggle('dark'); }
+
+        function init() { renderRegionButtons(); updateQuestionSliderRange(); setupSlider(); }
+
+        function renderRegionButtons() {
+            const container = document.getElementById('region-selector');
+            container.innerHTML = '';
+            CONTINENTS.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = `region-btn py-2 px-1 rounded-xl text-xs font-black transition-all border ${state.selectedContinent === c ? 'bg-amber-600 text-white border-amber-600' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-darkBorder hover:bg-slate-50 dark:hover:bg-slate-800'}`;
+                btn.textContent = c;
+                btn.onclick = () => { 
+                    state.selectedContinent = c; 
+                    renderRegionButtons(); 
+                    updateQuestionSliderRange();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function updateQuestionSliderRange() {
+            const slider = document.getElementById('question-slider');
+            const maxText = document.getElementById('max-question-text');
+            const label = document.getElementById('question-count-label');
+            
+            let maxVal;
+            if (state.selectedContinent === 'Random') {
+                maxVal = 100;
+            } else {
+                const count = CAPITAL_DATA.filter(c => c.continent === state.selectedContinent).length;
+                maxVal = count;
+            }
+
+            slider.max = maxVal;
+            maxText.textContent = `${maxVal} Max`;
+            
+            if (parseInt(slider.value) > maxVal) {
+                slider.value = maxVal;
+                state.questionCount = maxVal;
+            } else {
+                state.questionCount = parseInt(slider.value);
+            }
+            
+            label.textContent = `Questions (${state.questionCount} Qs)`;
+        }
+
+        function setupSlider() {
+            const slider = document.getElementById('question-slider');
+            const label = document.getElementById('question-count-label');
+            slider.oninput = (e) => {
+                state.questionCount = parseInt(e.target.value);
+                label.textContent = `Questions (${state.questionCount} Qs)`;
+            };
+        }
+
+        function showScreen(screenId) {
+            Object.keys(screens).forEach(id => screens[id].classList.toggle('hidden', id !== screenId));
+            state.currentScreen = screenId;
+            document.getElementById('next-action-bubble').classList.toggle('hidden', screenId === 'menu' || screenId === 'certificate');
+        }
+
+        function toggleModal(show, contentHtml = '') {
+            const overlay = document.getElementById('modal-overlay');
+            const container = document.getElementById('modal-container');
+            const content = document.getElementById('modal-content');
+            
+            if(show) {
+                content.innerHTML = contentHtml;
+                overlay.classList.remove('hidden');
+                setTimeout(() => container.classList.remove('scale-95', 'opacity-0'), 10);
+            } else {
+                container.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    content.innerHTML = '';
+                }, 200);
+            }
+        }
+
+        function openDevModal() {
+            const content = `
+                <div class="text-center">
+                    <div class="relative w-24 h-24 mx-auto mb-4">
+                        <img src="https://media.licdn.com/dms/image/v2/D4D03AQF5Gmm4JVd_Vw/profile-displayphoto-scale_400_400/B4DZroOBWfG0Ag-/0/1764832583961?e=1773273600&v=beta&t=tmgsN4eLsvn3fVbVTWHUT6GeAnnDdEuI8G1r3QLxUig" 
+                             class="w-full h-full object-cover rounded-full border-4 border-amber-600 shadow-xl" 
+                             alt="Kevin Malomba">
+                    </div>
+                    <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Meet the Developer</h3>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+                        Kevin Malomba is a visionary Biochemist and Web Developer based in Kenya. He is deeply passionate about decoding the complexities of life and logic—bridging the gap between the biological sequences of DNA and the digital elegance of software code.
+                    </p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="toggleModal(false)" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl hover:bg-slate-200 transition-all text-sm">
+                            Bye
+                        </button>
+                        <a href="mailto:kevinmalomba014@gmail.com?subject=Hi%20Kevin%20Malomba" class="bg-amber-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-amber-700 transition-all shadow-lg text-sm">
+                            Message
+                        </a>
+                    </div>
+                </div>
+            `;
+            toggleModal(true, content);
+        }
+
+        function toggleActionModal(show) {
+            const content = `
+                <h3 class="text-xl font-black text-slate-800 dark:text-white text-center mb-4">What's Next?</h3>
+                <div class="space-y-3">
+                    <button onclick="restartExam()" class="w-full bg-amber-600 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-amber-700 transition-all shadow-lg">
+                        <i class="fa-solid fa-rotate-left"></i> Restart Exam
+                    </button>
+                    <button onclick="goHome()" class="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                        <i class="fa-solid fa-right-from-bracket"></i> Main Menu
+                    </button>
+                    <button onclick="toggleModal(false)" class="w-full text-slate-400 font-bold py-2 mt-1 text-xs hover:text-slate-600 transition-all">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            toggleModal(show, content);
+        }
+
+        function toggleExportModal(show) {
+            const content = `
+                <h3 class="text-xl font-black text-slate-800 dark:text-white text-center mb-1">Export Diploma</h3>
+                <p class="text-slate-500 dark:text-slate-400 text-xs text-center mb-4">Choose your preferred format</p>
+                <div class="space-y-3">
+                    <button onclick="downloadCertImage()" class="w-full bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+                        <i class="fa-solid fa-image"></i> Download Image (.png)
+                    </button>
+                    <button onclick="downloadCertPDF()" class="w-full bg-amber-600 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-amber-700 transition-all">
+                        <i class="fa-solid fa-file-pdf"></i> Download Document (.pdf)
+                    </button>
+                    <button onclick="toggleModal(false)" class="w-full text-slate-400 font-bold py-2 mt-1 text-xs hover:text-slate-600 transition-all">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            toggleModal(show, content);
+        }
+
+        function startQuiz() {
+            const nameInput = document.getElementById('student-name');
+            const nameValue = nameInput.value.trim();
+            
+            if(!nameValue) {
+                nameInput.classList.add('input-error');
+                nameInput.placeholder = "ENTER NAME TO START";
+                nameInput.focus();
+                setTimeout(() => {
+                    nameInput.classList.remove('input-error');
+                }, 500);
+                return;
+            }
+
+            nameInput.placeholder = "Enter your name...";
+            state.userName = nameValue;
+            
+            let filtered = state.selectedContinent === 'Random' ? [...CAPITAL_DATA] : CAPITAL_DATA.filter(c => c.continent === state.selectedContinent);
+            state.questions = filtered.sort(() => 0.5 - Math.random()).slice(0, state.questionCount).map(q => {
+                const wrongOptions = CAPITAL_DATA.filter(c => c.capital !== q.capital).sort(() => 0.5 - Math.random()).slice(0, 3).map(c => c.capital);
+                return { ...q, options: [q.capital, ...wrongOptions].sort(() => 0.5 - Math.random()) };
+            });
+            state.currentIndex = 0; state.score = 0; state.isAnswering = false; showScreen('quiz'); renderQuestion();
+        }
+
+        function renderQuestion() {
+            state.isAnswering = false;
+            clearInterval(state.timer); state.timeLeft = 12; updateTimerUI();
+            const questionData = state.questions[state.currentIndex];
+            document.getElementById('quiz-progress').textContent = `Q ${state.currentIndex + 1} OF ${state.questions.length}`;
+            document.getElementById('quiz-question').textContent = `${questionData.country}?`;
+            const grid = document.getElementById('options-grid'); grid.innerHTML = '';
+            questionData.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "choice-btn group bg-white dark:bg-darkCard p-5 rounded-2xl border-2 border-slate-100 dark:border-darkBorder hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/10 text-left transition-all duration-200 shadow-sm relative overflow-hidden active:scale-95";
+                btn.dataset.value = opt;
+                btn.innerHTML = `
+                    <span class="text-base font-black text-slate-700 dark:text-slate-200 group-hover:text-amber-800 dark:group-hover:text-amber-500">${opt}</span>
+                    <i class="status-icon fa-solid"></i>
+                `;
+                btn.onclick = () => handleAnswer(opt, btn);
+                grid.appendChild(btn);
+            });
+            state.timer = setInterval(() => { state.timeLeft--; updateTimerUI(); if(state.timeLeft <= 0) handleAnswer(null, null); }, 1000);
+        }
+
+        function updateTimerUI() {
+            const text = document.getElementById('timer-text'); const bar = document.getElementById('timer-bar'); const badge = document.getElementById('timer-badge');
+            text.textContent = `${state.timeLeft}s`; bar.style.width = `${(state.timeLeft / 12) * 100}%`;
+            if(state.timeLeft < 5) {
+                badge.className = "flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-900/20 text-red-600 animate-pulse shrink-0";
+            } else {
+                badge.className = "flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/20 text-amber-600 shrink-0";
+            }
+        }
+
+        function handleAnswer(answer, element) {
+            if (state.isAnswering) return;
+            state.isAnswering = true;
+            clearInterval(state.timer);
+            
+            const correctAnswer = state.questions[state.currentIndex].capital;
+            const isCorrect = answer === correctAnswer;
+            const buttons = document.querySelectorAll('.choice-btn');
+
+            buttons.forEach(btn => {
+                btn.style.pointerEvents = 'none';
+                const icon = btn.querySelector('.status-icon');
+                
+                if (btn.dataset.value === correctAnswer) {
+                    if (isCorrect) {
+                        btn.classList.add('correct-choice');
+                        icon.classList.add('fa-check', 'text-green-600', 'show-icon');
+                    } else {
+                        btn.classList.add('revealed-correct');
+                        icon.classList.add('fa-check', 'text-amber-600', 'show-icon');
+                    }
+                } else if (btn === element && !isCorrect) {
+                    btn.classList.add('wrong-choice');
+                    icon.classList.add('fa-xmark', 'text-red-600', 'show-icon');
+                }
+            });
+
+            if (isCorrect) state.score++;
+
+            setTimeout(() => { 
+                if(state.currentIndex < state.questions.length - 1) { 
+                    state.currentIndex++; 
+                    renderQuestion(); 
+                } else { 
+                    showResult(); 
+                } 
+            }, isCorrect ? 1000 : 2000);
+        }
+
+        function showResult() {
+            showScreen('result');
+            document.getElementById('score-badge').textContent = state.score;
+            document.getElementById('trophy-icon').className = `fa-solid fa-trophy text-5xl ${state.score === state.questions.length ? 'text-amber-500' : 'text-slate-300 dark:text-slate-600'}`;
+            document.getElementById('result-message').textContent = state.score === state.questions.length ? "Academic Excellence Achieved!" : "Assessment concluded successfully.";
+        }
+
+        function showCertificate() {
+            showScreen('certificate');
+            document.getElementById('cert-name').textContent = state.userName;
+            document.getElementById('cert-date').textContent = new Date().toLocaleDateString();
+            const grade = document.getElementById('cert-grade'); const isPerfect = state.score === state.questions.length;
+            grade.textContent = isPerfect ? 'FIRST CLASS HONORS' : 'PASS';
+            grade.className = `text-3xl md:text-5xl font-black italic ${isPerfect ? 'text-amber-600' : 'text-slate-600'}`;
+        }
+
+        function downloadCertImage() {
+            toggleModal(false);
+            const node = document.getElementById('cert-capture-area');
+            htmlToImage.toPng(node, { quality: 1, pixelRatio: 3, useCORS: true })
+                .then(function (dataUrl) {
+                    const link = document.createElement('a');
+                    link.download = `Malomba_Diploma_${state.userName.replace(/\s+/g, '_')}.png`;
+                    link.href = dataUrl; link.click();
+                }).catch(function (error) { console.error('Capture error', error); });
+        }
+
+        function downloadCertPDF() {
+            toggleModal(false);
+            const node = document.getElementById('cert-capture-area');
+            htmlToImage.toPng(node, { quality: 1, pixelRatio: 2, useCORS: true })
+                .then(function (dataUrl) {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'px',
+                        format: [node.offsetWidth * 2, node.offsetHeight * 2]
+                    });
+                    
+                    pdf.addImage(dataUrl, 'PNG', 0, 0, node.offsetWidth * 2, node.offsetHeight * 2);
+                    pdf.save(`Malomba_Diploma_${state.userName.replace(/\s+/g, '_')}.pdf`);
+                }).catch(function (error) { console.error('PDF error', error); });
+        }
+
+        function restartExam() { toggleModal(false); startQuiz(); }
+        function goHome() { toggleModal(false); showScreen('menu'); document.getElementById('student-name').value = ''; }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
